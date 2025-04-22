@@ -1,0 +1,19 @@
+data
+
+# Ignore node_modules in all directories
+node_modules/
+
+# Ignore Python virtual environments
+asn_env/
+.env/
+*.pyc
+__pycache__/
+
+# Ignore environment files
+.env
+*.env
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
