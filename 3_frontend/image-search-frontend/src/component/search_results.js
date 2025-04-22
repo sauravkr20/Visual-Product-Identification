@@ -26,6 +26,8 @@ export default function SearchResults({ results }) {
 
   return (
     <>
+      {results.length>0 && <Typography variant="subtitle1">Responses:</Typography>}
+      
       <Grid container spacing={3}>
         {results.map((item, idx) => {
           const img = item;

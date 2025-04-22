@@ -20,8 +20,7 @@ const IMAGE_BASE_URL = "http://localhost:5000/images/";
 export default function ProductModal({ open, onClose, itemId }) {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [selectedLang, setSelectedLang] = useState("en_IN");
-
+  
   useEffect(() => {
     if (!itemId) return;
 
