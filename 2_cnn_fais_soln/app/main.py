@@ -8,7 +8,7 @@ from fastapi import FastAPI
 
 from app.config import SHOE_IMAGES_FOLDER, FAISS_INDEX_PATH, IMAGE_PATHS_JSON
 from app.model import extract_embedding
-from app.search import load_index, load_image_paths, save_index, save_image_paths, search
+from app.search import load_index, load_image_paths, save_index, save_image_paths, search, load_product_metadata
 
 app = FastAPI()
 
@@ -22,6 +22,29 @@ app.add_middleware(
 
 index = load_index(FAISS_INDEX_PATH)
 image_paths = load_image_paths(IMAGE_PATHS_JSON)
+products = load_product_metadata(IMAGE_PATHS_JSON)
+
+# Transform the product data
+transformed_products = []
+for product in products:
+    transformed = {
+        "item_id": product["item_id"],
+        "product_type": product["product_type"],
+        "item_name": product["item_name"],
+        "main_image": {
+            "image_id": product["main_image_id"],
+            "image_path": image_paths.get(product["main_image_id"], "")
+        },
+        "other_images": [
+            {
+                "image_id": img_id,
+                "image_path": image_paths.get(img_id, "")
+            } for img_id in product["other_image_id"]
+        ]
+    }
+    transformed_products.append(transformed)
+
+
 
 @app.post("/search/")
 async def search_image(file: UploadFile = File(...), top_k: int = 5):
@@ -33,6 +56,13 @@ async def search_image(file: UploadFile = File(...), top_k: int = 5):
     indices, scores = search(index, emb, top_k)
     results = [{"image_path": image_paths[i], "score": scores[idx]} for idx, i in enumerate(indices)]
     return {"results": results}
+
+@app.get("/products/{item_id}")
+async def get_product(item_id: str):
+    product = next((p for p in products if p['item_id'] == item_id), None)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
 
 @app.post("/add/")
 async def add_image(file: UploadFile = File(...), image_path: str = None):
