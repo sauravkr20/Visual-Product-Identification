@@ -5,17 +5,14 @@ import {
   Button,
   CircularProgress,
   Container,
-  Grid,
   Typography,
-  Card,
-  CardMedia,
-  CardContent,
 } from "@mui/material";
 
 import SearchResults from "./search_results";
-
+import SearchMethodSelect from "./search_method_select";  
 function Search() {
   const [file, setFile] = useState(null);
+  const [method, setMethod] = useState("cnn_faiss");  
   const [previewUrl, setPreviewUrl] = useState(null);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -38,6 +35,7 @@ function Search() {
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("method", method);  
     formData.append("top_k", 5);
 
     setLoading(true);
@@ -60,6 +58,8 @@ function Search() {
       <Typography variant="h4" gutterBottom>
         Image Search
       </Typography>
+
+      <SearchMethodSelect method={method} setMethod={setMethod} />
 
       <Box display="flex" alignItems="center" gap={2} mb={3}>
         <input
@@ -90,44 +90,7 @@ function Search() {
         </Box>
       )}
 
-      {/* {results.length > 0 && (
-        <>
-          <Typography variant="h5" gutterBottom>
-            Results:
-          </Typography>
-          <Grid container spacing={3}>
-            {results.map((item, idx) => {
-              const img = item.image_path; // This is the nested object
-              return (
-                <Grid item xs={12} sm={6} md={4} key={idx}>
-                  <Card>
-                    <CardMedia
-                      component="img"
-                      height="200"
-                      image={`http://localhost:5000/images/${img.image_path}`} // construct URL from relative path
-                      alt={`Result ${idx + 1}`}
-                    />
-                    <CardContent>
-                      <Typography variant="body2" color="text.secondary">
-                        <strong>Image ID:</strong> {img.image_id || "N/A"}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        <strong>Item ID:</strong> {img.item_id || "N/A"}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        <strong>Score:</strong> {item.score?.toFixed(4)}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              );
-            })}
-          </Grid>
-        </>
-      )}
-       */}
-
-      <SearchResults results={results} />
+      <SearchResults results={results} method={method} />
     </Container>
   );
 }
