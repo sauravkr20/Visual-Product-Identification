@@ -12,7 +12,11 @@ def save_index(index: faiss.IndexFlatIP, index_path: str):
 def load_image_paths(json_path: str) -> List[str]:
     with open(json_path, "r") as f:
         return json.load(f)
-    
+
+def load_embedding_metadata(json_path: str) -> List[str]:
+    with open(json_path, "r") as f:
+        return json.load(f)
+        
 def load_product_metadata(json_path: str)-> List[dict]:
     with open(json_path, "r") as f:
         return json.load(f)

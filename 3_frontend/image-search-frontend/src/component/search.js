@@ -69,7 +69,7 @@ function Search() {
               <div><strong>Image ID:</strong> {item.image_id || "N/A"}</div>
               <div><strong>Item ID:</strong> {item.item_id || "N/A"}</div>
               <img
-                src={`http://localhost:8000/${item.image_path}`}  // Adjust as needed
+                src={`http://localhost:8000/images/${item.image_path}`}  // Adjust as needed
                 alt={`Result ${idx + 1}`}
                 style={{ maxWidth: "100%", maxHeight: 200, marginTop: 10 }}
               />
