@@ -1,5 +1,18 @@
 import React, { useState } from "react";
 import axios from "axios";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  Grid,
+  Typography,
+  Card,
+  CardMedia,
+  CardContent,
+} from "@mui/material";
+
+import SearchResults from "./search_results";
 
 function Search() {
   const [file, setFile] = useState(null);
@@ -29,12 +42,11 @@ function Search() {
 
     setLoading(true);
     try {
-      const response = await axios.post("http://localhost:8000/search/", formData, {
+      const response = await axios.post("http://localhost:5000/search/", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-
       setResults(response.data.results);
     } catch (error) {
       console.error("Search error:", error);
@@ -44,41 +56,79 @@ function Search() {
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: "auto", padding: 20 }}>
-      <h2>Image Search</h2>
-      <input type="file" onChange={handleFileChange} accept="image/*" />
+    <Container maxWidth="md" sx={{ mt: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Image Search
+      </Typography>
+
+      <Box display="flex" alignItems="center" gap={2} mb={3}>
+        <input
+          type="file"
+          onChange={handleFileChange}
+          accept="image/*"
+          style={{ flex: 1 }}
+        />
+        <Button
+          variant="contained"
+          onClick={handleSearch}
+          disabled={loading}
+          sx={{ minWidth: 120 }}
+        >
+          {loading ? <CircularProgress size={24} color="inherit" /> : "Search"}
+        </Button>
+      </Box>
+
       {previewUrl && (
-        <div style={{ margin: "20px 0" }}>
-          <div>Preview:</div>
-          <img
+        <Box mb={4}>
+          <Typography variant="subtitle1">Preview:</Typography>
+          <Box
+            component="img"
             src={previewUrl}
             alt="Selected preview"
-            style={{ maxWidth: "100%", maxHeight: 300, border: "1px solid #ccc" }}
+            sx={{ maxWidth: "100%", maxHeight: 300, borderRadius: 1, border: "1px solid #ccc" }}
           />
-        </div>
+        </Box>
       )}
-      <button onClick={handleSearch} disabled={loading} style={{ marginLeft: 10 }}>
-        {loading ? "Searching..." : "Search"}
-      </button>
 
-      <div style={{ marginTop: 20 }}>
-        {results.length > 0 && <h3>Results:</h3>}
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {results.map((item, idx) => (
-            <li key={idx} style={{ marginBottom: 20 }}>
-              <div><strong>Image ID:</strong> {item.image_id || "N/A"}</div>
-              <div><strong>Item ID:</strong> {item.item_id || "N/A"}</div>
-              <img
-                src={`http://localhost:8000/images/${item.image_path}`}  // Adjust as needed
-                alt={`Result ${idx + 1}`}
-                style={{ maxWidth: "100%", maxHeight: 200, marginTop: 10 }}
-              />
-              <div><strong>Score:</strong> {item.score?.toFixed(4)}</div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
+      {/* {results.length > 0 && (
+        <>
+          <Typography variant="h5" gutterBottom>
+            Results:
+          </Typography>
+          <Grid container spacing={3}>
+            {results.map((item, idx) => {
+              const img = item.image_path; // This is the nested object
+              return (
+                <Grid item xs={12} sm={6} md={4} key={idx}>
+                  <Card>
+                    <CardMedia
+                      component="img"
+                      height="200"
+                      image={`http://localhost:5000/images/${img.image_path}`} // construct URL from relative path
+                      alt={`Result ${idx + 1}`}
+                    />
+                    <CardContent>
+                      <Typography variant="body2" color="text.secondary">
+                        <strong>Image ID:</strong> {img.image_id || "N/A"}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        <strong>Item ID:</strong> {img.item_id || "N/A"}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        <strong>Score:</strong> {item.score?.toFixed(4)}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              );
+            })}
+          </Grid>
+        </>
+      )}
+       */}
+
+      <SearchResults results={results} />
+    </Container>
   );
 }
 
