@@ -1,6 +1,7 @@
 from PIL import Image
 from typing import List
 from app.models.search_models import SearchResultItem
+from app.db.mongo import embedding_cnn_faiss_metadata_col
 
 class CNNFaissSearch:
     def __init__(self, index, embedding_metadata, extract_embedding_func, search_func):
@@ -14,11 +15,20 @@ class CNNFaissSearch:
         indices, scores = self.search(self.index, emb, top_k)
         results = []
         for idx, score in zip(indices, scores):
-            meta = self.embedding_metadata[idx]
-            results.append(SearchResultItem(
-                image_id=meta["image_id"],
-                item_id=meta.get("item_id"),
-                image_path=meta["image_path"],
-                score=float(score),
-            ))
+            # Query embedding metadata by index or image_id
+            print("idx: ", idx)
+            embedding_doc = embedding_cnn_faiss_metadata_col.find_one({"faiss_index": idx})
+            if not embedding_doc:
+                continue
+            image_id = embedding_doc["image_id"]
+            image_path = embedding_doc["image_path"]
+            item_id = embedding_doc.get("item_id")
+
+            results.append({
+                "image_id": image_id,
+                "item_id": item_id,
+                "image_path": image_path,
+                "score": float(score)
+            })
+
         return results

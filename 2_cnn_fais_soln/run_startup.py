@@ -1,7 +1,8 @@
-from app.startup import build_index_from_folder, build_cnn_faiss_index
+from app.startup import build_cnn_faiss_index, build_products_col
 
 
 if __name__ == "__main__":
-    build_index_from_folder()
-    
+    build_products_col()
+
+
     build_cnn_faiss_index()

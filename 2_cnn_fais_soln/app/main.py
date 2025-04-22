@@ -31,19 +31,13 @@ app.add_middleware(
 index = load_index(FAISS_INDEX_PATH)
 embedding_metadata = load_embedding_metadata(EMBEDDING_META_INDEX)
 
-# Load and transform product data
-transformed_products, product_dict = load_and_transform_data(
-    SHOE_PRODUCT_JSON_PATH,
-    EMBEDDING_META_INDEX,
-)
-
 # Mount static files for images
 app.mount("/images", StaticFiles(directory=SHOE_IMAGES_FOLDER), name="images")
 
 # Initialize services and controllers
 cnn_faiss_service = CNNFaissSearch(index, embedding_metadata, extract_embedding, search)
 search_controller = SearchController(cnn_faiss_service)
-products_controller = ProductsController(product_dict)
+products_controller = ProductsController()
 add_controller = AddController(index, embedding_metadata, extract_embedding, save_index, SHOE_IMAGES_FOLDER, EMBEDDING_META_INDEX)
 
 # Inject controllers into routers
