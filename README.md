@@ -38,6 +38,7 @@ This repository contains a full-stack solution for visual product identification
 
 ## Directory Structure
 
+```
 .
 ├── 2_cnn_fais_soln
 │ ├── app # FastAPI backend source code
@@ -69,6 +70,7 @@ This repository contains a full-stack solution for visual product identification
 └── requirements.txt # Global Python dependencies (optional)
 |__ data
 
+```
 //// the data folder is to  be downloaded from the link given ////
 
 ---
