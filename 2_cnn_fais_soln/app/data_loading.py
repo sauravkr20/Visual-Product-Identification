@@ -4,15 +4,8 @@ from app.search import load_embedding_metadata, load_product_metadata
 def load_and_transform_data(
     product_json_path: str,
     embedding_meta_index_path: str,
-) -> (List[Dict], Dict[str, Dict]):
-    """
-    Loads product metadata and embedding metadata, then transforms product data
-    by resolving image paths for main and other images.
+) -> (List[Dict]|Dict[str, Dict]):
 
-    Returns:
-        transformed_products: List of transformed product dicts
-        product_dict: Dict mapping item_id -> transformed product dict
-    """
     products = load_product_metadata(product_json_path)
     embedding_metadata = load_embedding_metadata(embedding_meta_index_path)
 
