@@ -31,8 +31,10 @@ This repository contains a full-stack solution for visual product identification
 - Product metadata integration  
 - React frontend with image preview, search, and modal detail view  
 - Easy addition of new images and embeddings  
-- CORS enabled for frontend-backend communication  
 - Static file serving for product images  
+- Tests with image modifications 
+- Adding of images(product) allowed
+- mongo for product metadata
 
 ---
 
