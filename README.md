@@ -21,6 +21,7 @@ This repository contains a full-stack solution for visual product identification
 - **Backend:** FastAPI app that extracts image embeddings using a CNN model, indexes them with FAISS, and serves search and product metadata APIs.
 - **Frontend:** React app that allows users to upload images, performs similarity search, and displays grouped search results with detailed product info.
 - **Dataset utilities:** Scripts to filter and prepare shoe product images and metadata.
+- **Test Script:** Script to create Test case on based image modification and calculating model performance.
 
 ---
 
