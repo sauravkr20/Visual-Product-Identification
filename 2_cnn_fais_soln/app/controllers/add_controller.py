@@ -8,7 +8,7 @@ from bson import ObjectId
 from app.model import extract_embedding
 from app.db.mongo import products_col, embedding_cnn_faiss_metadata_col
 from app.search import save_index
-from app.config import SHOE_IMAGES_FOLDER, EMBEDDING_META_INDEX, FAISS_INDEX_PATH
+from app.config import SHOE_IMAGES_FOLDER,  FAISS_INDEX_PATH
 
 class AddController:
     def __init__(
@@ -23,7 +23,6 @@ class AddController:
         self.embedding_cnn_faiss_metadata_col = embedding_cnn_faiss_metadata_col
         self.faiss_index_path = FAISS_INDEX_PATH
         self.embedding_metadata = []  # Initialize or load from file if needed
-        self.embedding_meta_path = EMBEDDING_META_INDEX
 
     def _generate_image_id(self, length=7):
         alphabet = string.ascii_uppercase + string.digits
@@ -85,11 +84,7 @@ class AddController:
         self.embedding_metadata.append(main_image_meta)
         self.embedding_metadata.extend(other_image_metas)
 
-        # Convert ObjectId to str before dumping JSON
-        clean_metadata = self._convert_objectid_to_str(self.embedding_metadata)
         self.save_index(self.index, self.faiss_index_path)
-        with open(self.embedding_meta_path, "w") as f:
-            json.dump(clean_metadata, f, indent=2)
 
         self.embedding_cnn_faiss_metadata_col.insert_many([main_image_meta] + other_image_metas)
 

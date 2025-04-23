@@ -2,7 +2,7 @@ import os
 import gzip
 import json
 
-metadata_dir = '../listings/metadata'  # Adjust path if needed
+metadata_dir = '../../data/listings/metadata'  # Adjust path if needed
 shoe_products = []
 
 # Iterate over all listings JSON.gz files
@@ -32,7 +32,10 @@ for filename in sorted(os.listdir(metadata_dir)):
 
 print(f"Found {len(shoe_products)} shoe products.")
 
-# Save filtered shoe products metadata to JSON file
-with open('../data/shoe_products.json', 'w') as f:
-    json.dump(shoe_products, f, indent=2)
-print("Saved shoe products metadata to 'shoe_products.json'")
+half_length = len(shoe_products) // 2
+shoe_products_half = shoe_products[:half_length]
+
+with open('../../data/testSet1/limited2_shoe_products.json', 'w') as f:
+    json.dump(shoe_products_half, f, indent=2)
+
+print(f"Saved half ({half_length}) of the shoe products metadata to 'limited2_shoe_products.json'")

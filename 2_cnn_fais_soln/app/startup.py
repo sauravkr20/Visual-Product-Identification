@@ -16,6 +16,7 @@ from app.config import (
     KMEANS_MODEL_PATH,
     SHOE_PRODUCT_JSON_PATH
 )
+import time
 
 def build_products_col():
     print("Loading product data from JSON...")
@@ -46,59 +47,100 @@ def build_products_col():
     products_col.create_index("item_id", unique=True)
     print("Product data inserted successfully with index on 'item_id'.")
 
+BATCH_SIZE = 1000
+LOG_FILE_PATH = "faiss_build_time.log"  # You can customize the log file path
 
 def build_cnn_faiss_index():
     with open(IMAGE_PATHS_JSON, "r") as f:
         original_metadata = json.load(f)
 
-    embeddings = []
-    metadata_docs = []
-    print(f"Processing {len(original_metadata)} images for CNN FAISS index...")
+    total_images = len(original_metadata)
+    print(f"Processing {total_images} images for CNN FAISS index in batches of {BATCH_SIZE}...")
 
-    for idx, record in enumerate(original_metadata):
-        relative_path = Path(record["image_path"])
-        image_id = record["image_id"]
-        item_id = record["item_id"]
-        image_file_path = Path(SHOE_IMAGES_FOLDER) / relative_path
+    # Clear existing metadata before starting
+    embedding_cnn_faiss_metadata_col.delete_many({})
 
-        if not image_file_path.exists():
-            print(f"Image not found: {image_file_path}")
+    all_embeddings = []
+    all_metadata_docs = []
+
+    total_time_ms = 0
+    batch_times = []
+
+    for batch_start in range(0, total_images, BATCH_SIZE):
+        batch_end = min(batch_start + BATCH_SIZE, total_images)
+        batch_metadata = original_metadata[batch_start:batch_end]
+
+        batch_embeddings = []
+        batch_metadata_docs = []
+
+        batch_start_time = time.perf_counter()
+
+        for idx, record in enumerate(batch_metadata, start=batch_start):
+            relative_path = Path(record["image_path"])
+            image_id = record["image_id"]
+            item_id = record["item_id"]
+            image_file_path = Path(SHOE_IMAGES_FOLDER) / relative_path
+
+            if not image_file_path.exists():
+                print(f"Image not found: {image_file_path}")
+                continue
+
+            try:
+                image = Image.open(image_file_path).convert("RGB")
+                emb = extract_embedding(image)
+                batch_embeddings.append(emb)
+
+                batch_metadata_docs.append({
+                    "faiss_index": idx,
+                    "image_id": image_id,
+                    "item_id": item_id,
+                    "image_path": str(relative_path)
+                })
+
+            except Exception as e:
+                print(f"Failed to process {relative_path}: {e}")
+
+            if (idx + 1) % 100 == 0 or (idx + 1) == total_images:
+                print(f"Processed {idx + 1}/{total_images} images")
+
+        batch_end_time = time.perf_counter()
+        batch_duration_ms = (batch_end_time - batch_start_time) * 1000
+        total_time_ms += batch_duration_ms
+        batch_times.append(batch_duration_ms)
+
+        print(f"Batch {batch_start} - {batch_end} processed in {batch_duration_ms:.2f} ms")
+        print(f"Total time elapsed: {total_time_ms / 1000:.2f} seconds")
+
+        if not batch_embeddings:
+            print(f"No embeddings extracted in batch {batch_start} - {batch_end}. Skipping batch.")
             continue
 
-        try:
-            image = Image.open(image_file_path).convert("RGB")
-            emb = extract_embedding(image)
-            embeddings.append(emb)
+        embedding_cnn_faiss_metadata_col.insert_many(batch_metadata_docs)
 
-            metadata_docs.append({
-                "faiss_index": idx,
-                "image_id": image_id,
-                "item_id": item_id,
-                "image_path": str(relative_path)
-            })
+        all_embeddings.extend(batch_embeddings)
+        all_metadata_docs.extend(batch_metadata_docs)
 
-        except Exception as e:
-            print(f"Failed to process {relative_path}: {e}")
-
-        if (idx + 1) % 100 == 0 or (idx + 1) == len(original_metadata):
-            print(f"Processed {idx + 1}/{len(original_metadata)} images")
-
-    if not embeddings:
-        print("No embeddings extracted. Exiting CNN FAISS build.")
+    if not all_embeddings:
+        print("No embeddings extracted overall. Exiting CNN FAISS build.")
         return
 
-    # Clear existing metadata and insert all at once
-    embedding_cnn_faiss_metadata_col.delete_many({})
-    if metadata_docs:
-        embedding_cnn_faiss_metadata_col.insert_many(metadata_docs)
-        embedding_cnn_faiss_metadata_col.create_index("faiss_index")
+    embeddings_np = np.stack(all_embeddings).astype("float32")
 
-    embeddings = np.stack(embeddings).astype("float32")
-    index = build_faiss_index(embeddings)
+    index = build_faiss_index(embeddings_np)
     save_index(index, FAISS_INDEX_PATH)
 
-    print(f"CNN FAISS index saved to {FAISS_INDEX_PATH}")
+    embedding_cnn_faiss_metadata_col.create_index("faiss_index")
 
+    print(f"CNN FAISS index saved to {FAISS_INDEX_PATH} with {len(all_embeddings)} embeddings.")
+
+    # Write timing info to log file
+    with open(LOG_FILE_PATH, "w") as log_file:
+        log_file.write(f"Processed {total_images} images in {total_time_ms / 1000:.2f} seconds\n")
+        log_file.write("Batch processing times (ms):\n")
+        for i, t in enumerate(batch_times):
+            log_file.write(f"Batch {i + 1}: {t:.2f} ms\n")
+
+    print(f"Timing log saved to {LOG_FILE_PATH}")
 
 # def extract_sift_descriptors(image):
 #     gray = np.array(image.convert("L"))

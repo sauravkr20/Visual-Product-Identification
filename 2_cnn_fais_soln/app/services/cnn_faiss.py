@@ -15,7 +15,6 @@ class CNNFaissSearch:
         results = []
         for idx, score in zip(indices, scores):
             # Query embedding metadata by index or image_id
-            print("idx: ", idx)
             embedding_doc = embedding_cnn_faiss_metadata_col.find_one({"faiss_index": idx})
             if not embedding_doc:
                 continue

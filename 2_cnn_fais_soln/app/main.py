@@ -2,11 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.config import SHOE_IMAGES_FOLDER, FAISS_INDEX_PATH, EMBEDDING_META_INDEX
+from app.config import SHOE_IMAGES_FOLDER, FAISS_INDEX_PATH
 from app.model import extract_embedding
 from app.search import load_index, load_embedding_metadata, save_index, search, load_product_metadata
-
-from app.data_loading import load_and_transform_data
 
 from app.services.cnn_faiss import CNNFaissSearch
 from app.controllers.search_controller import SearchController

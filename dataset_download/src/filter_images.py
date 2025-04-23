@@ -16,11 +16,11 @@ with gzip.open('../../data/images.csv.gz', 'rt', encoding='utf-8') as f:
 print(f"Loaded {len(image_id_to_path)} image entries.")
 
 # Load shoe products metadata
-with open('shoe_products.json', 'r') as f:
+with open('../../data/testSet1/limited2_shoe_products.json', 'r') as f:
     shoe_products = json.load(f)
 
 # first test set
-limited_shoe_products = shoe_products[:1000]
+limited_shoe_products = shoe_products
 
 # Collect all unique (image_id, image_path) tuples needed for shoe products
 required_images = set()
@@ -75,10 +75,10 @@ for idx, (image_id, image_path, item_id) in enumerate(required_images, start=1):
     print(f"Processed {idx} images.")
     print(f"image_copy_info: {image_id}, {item_id}")
 
-with open('../../data/limited_image_paths.json', 'w') as f:
+with open('../../data/testSet1/limited2_image_paths.json', 'w') as f:
     json.dump(image_copy_info, f, indent=2)
 
-print(f"Saved copy info for {total_images} images to 'limited_image_paths.json'")
+print(f"Saved copy info for {total_images} images to 'limited2_image_paths.json'")
 
 
 # import boto3
