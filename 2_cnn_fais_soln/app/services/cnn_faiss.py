@@ -4,9 +4,8 @@ from app.models.search_models import SearchResultItem
 from app.db.mongo import embedding_cnn_faiss_metadata_col
 
 class CNNFaissSearch:
-    def __init__(self, index, embedding_metadata, extract_embedding_func, search_func):
+    def __init__(self, index,  extract_embedding_func, search_func):
         self.index = index
-        self.embedding_metadata = embedding_metadata
         self.extract_embedding = extract_embedding_func
         self.search = search_func
 
