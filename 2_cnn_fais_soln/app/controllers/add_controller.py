@@ -47,7 +47,7 @@ class AddController:
         if not main_image.content_type.startswith("image/"):
             raise HTTPException(status_code=400, detail="Main image must be an image")
 
-        main_image_id = self._generate_image_id()
+        main_image_id = item_id + self._generate_image_id()
         main_image_path = await self._save_image(main_image, main_image_id)
 
         # Open image once
@@ -89,7 +89,7 @@ class AddController:
             for img_file in other_images:
                 if not img_file.content_type.startswith("image/"):
                     raise HTTPException(status_code=400, detail="One of the other images is not an image")
-                img_id = self._generate_image_id()
+                img_id = item_id + self._generate_image_id()
                 img_path = await self._save_image(img_file, img_id)
 
                 with Image.open(img_path) as img:
