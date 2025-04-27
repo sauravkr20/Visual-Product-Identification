@@ -5,8 +5,8 @@ from PIL import Image
 import cv2
 from sklearn.cluster import MiniBatchKMeans
 import pickle
-from app.db.mongo import embedding_cnn_faiss_metadata_col, products_col
-from app.model import extract_embedding
+from app.db.mongo import embedding_cnn_faiss_metadata_col, embedding_clip_faiss_metadata_col, products_col
+from app.model import extract_embedding, extract_clip_embedding
 from app.search import build_faiss_index, save_index
 from app.config import (
     FAISS_INDEX_PATH,
@@ -14,7 +14,8 @@ from app.config import (
     IMAGE_PATHS_JSON,
     SHOE_IMAGES_FOLDER,
     KMEANS_MODEL_PATH,
-    SHOE_PRODUCT_JSON_PATH
+    SHOE_PRODUCT_JSON_PATH, 
+    CLIP_FAISS_INDEX_PATH
 )
 import time
 
@@ -49,6 +50,103 @@ def build_products_col():
 
 BATCH_SIZE = 1000
 LOG_FILE_PATH = "faiss_build_time.log"  # You can customize the log file path
+
+CLIP_LOG_FILE_PATH = "clip_faiss_build_time.log"  # Separate log file for CLIP
+
+def build_clip_faiss_index():
+    with open(IMAGE_PATHS_JSON, "r") as f:
+        original_metadata = json.load(f)
+
+    total_images = len(original_metadata)
+    print(f"Processing {total_images} images for CLIP FAISS index in batches of {BATCH_SIZE}...")
+
+    # Clear existing metadata before starting
+    embedding_clip_faiss_metadata_col.delete_many({})
+
+    all_embeddings = []
+    all_metadata_docs = []
+
+    total_time_ms = 0
+    batch_times = []
+
+    for batch_start in range(0, total_images, BATCH_SIZE):
+        batch_end = min(batch_start + BATCH_SIZE, total_images)
+        batch_metadata = original_metadata[batch_start:batch_end]
+
+        batch_embeddings = []
+        batch_metadata_docs = []
+
+        batch_start_time = time.perf_counter()
+
+        for idx, record in enumerate(batch_metadata, start=batch_start):
+            relative_path = Path(record["image_path"])
+            image_id = record["image_id"]
+            item_id = record["item_id"]
+            image_file_path = Path(SHOE_IMAGES_FOLDER) / relative_path
+
+            if not image_file_path.exists():
+                print(f"Image not found: {image_file_path}")
+                continue
+
+            try:
+                image = Image.open(image_file_path).convert("RGB")
+                emb = extract_clip_embedding(image)
+                batch_embeddings.append(emb)
+
+                batch_metadata_docs.append({
+                    "faiss_index": idx,
+                    "image_id": image_id,
+                    "item_id": item_id,
+                    "image_path": str(relative_path)
+                })
+
+            except Exception as e:
+                print(f"Failed to process {relative_path}: {e}")
+
+            if (idx + 1) % 100 == 0 or (idx + 1) == total_images:
+                print(f"Processed {idx + 1}/{total_images} images")
+
+        batch_end_time = time.perf_counter()
+        batch_duration_ms = (batch_end_time - batch_start_time) * 1000
+        total_time_ms += batch_duration_ms
+        batch_times.append(batch_duration_ms)
+
+        print(f"Batch {batch_start} - {batch_end} processed in {batch_duration_ms:.2f} ms")
+        print(f"Total time elapsed: {total_time_ms / 1000:.2f} seconds")
+
+        if not batch_embeddings:
+            print(f"No embeddings extracted in batch {batch_start} - {batch_end}. Skipping batch.")
+            continue
+
+        embedding_clip_faiss_metadata_col.insert_many(batch_metadata_docs)
+
+        all_embeddings.extend(batch_embeddings)
+        all_metadata_docs.extend(batch_metadata_docs)
+
+    if not all_embeddings:
+        print("No embeddings extracted overall. Exiting CLIP FAISS build.")
+        return
+
+    embeddings_np = np.stack(all_embeddings).astype("float32")
+
+    index = build_faiss_index(embeddings_np)
+    save_index(index, CLIP_FAISS_INDEX_PATH)
+
+    # Create index on faiss_index for faster queries
+    embedding_clip_faiss_metadata_col.create_index("faiss_index")
+
+    print(f"CLIP FAISS index saved to {CLIP_FAISS_INDEX_PATH} with {len(all_embeddings)} embeddings.")
+
+    # Write timing info to log file
+    with open(CLIP_LOG_FILE_PATH, "w") as log_file:
+        log_file.write(f"Processed {total_images} images in {total_time_ms / 1000:.2f} seconds\n")
+        log_file.write("Batch processing times (ms):\n")
+        for i, t in enumerate(batch_times):
+            log_file.write(f"Batch {i + 1}: {t:.2f} ms\n")
+
+    print(f"Timing log saved to {CLIP_LOG_FILE_PATH}")
+
+
 
 def build_cnn_faiss_index():
     with open(IMAGE_PATHS_JSON, "r") as f:
