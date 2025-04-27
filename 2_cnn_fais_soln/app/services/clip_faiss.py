@@ -37,11 +37,11 @@ class CLIPFaissSearch:
             image_path = embedding_doc.get("image_path")
             item_id = embedding_doc.get("item_id")
 
-            results.append(SearchResultItem(
-                image_id=image_id,
-                item_id=item_id,
-                image_path=image_path,
-                score=float(score)
-            ))
+            results.append({
+                "image_id": image_id,
+                "item_id": item_id,
+                "image_path": image_path,
+                "score": float(score)
+            })
 
         return results
