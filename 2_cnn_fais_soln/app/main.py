@@ -40,7 +40,8 @@ clip_faiss_service = CLIPFaissSearch(clip_index, extract_clip_embedding, search)
 search_controller = SearchController(cnn_faiss_service, clip_faiss_service)
 products_controller = ProductsController()
 add_controller = AddController(
-    faiss_cnn_index=index
+    faiss_cnn_index=index, 
+    faiss_clip_index = clip_index
 )
 
 
